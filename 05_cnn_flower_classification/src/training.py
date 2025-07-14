@@ -18,6 +18,7 @@ def train_step(
     # Putting the model to training mode
     model.train()
 
+    # Iterate through training data
     for batch, (x, y) in enumerate(train_dataloader):
         # Put tensors on the device
         x = x.to(device)
@@ -49,21 +50,22 @@ def train_step(
     return train_loss, train_acc
 
 
-def test_step(
+def val_step(
         model: torch.nn.Module,
-        test_dataloader: torch.utils.data.DataLoader,
+        val_dataloader: torch.utils.data.DataLoader,
         accuracy: torchmetrics.Accuracy,
         loss_fn: torch.nn.CrossEntropyLoss,
         device: torch.device
 ):
-    test_loss = 0
-    test_acc = 0
+    val_loss = 0
+    val_acc = 0
 
     # Putting the model to training mode
     model.eval()
 
     with torch.inference_mode():
-        for batch, (x, y) in enumerate(test_dataloader):
+        # Iterate through validation data
+        for batch, (x, y) in enumerate(val_dataloader):
             # Put tensors on the device
             x = x.to(device)
             y = y.to(device)
@@ -73,16 +75,16 @@ def test_step(
 
             # Calculate the loss for the batch and add it
             loss = loss_fn(y_logits, y)
-            test_loss += loss
+            val_loss += loss
 
             # Calculate the accuracy for the batch and add it
             acc = accuracy(torch.argmax(y_logits, dim=1), y)
-            test_acc += acc
+            val_acc += acc
 
-        test_loss = test_loss / len(test_dataloader)
-        test_acc = test_acc / len(test_dataloader)
+        val_loss = val_loss / len(val_dataloader)
+        val_acc = val_acc / len(val_dataloader)
 
-    return test_loss, test_acc
+    return val_loss, val_acc
 
 
 def train_model(
@@ -90,9 +92,10 @@ def train_model(
         num_classes: int,
         model: torch.nn.Module,
         train_dataloader: torch.utils.data.DataLoader,
-        test_dataloader: torch.utils.data.DataLoader,
+        val_dataloader: torch.utils.data.DataLoader,
         loss_fn: torch.nn.CrossEntropyLoss,
         optimizer: torch.optim.Optimizer,
+        scheduler: torch.optim.lr_scheduler,
         device: torch.device
 ):
     accuracy = accuracy_fn(num_classes).to(device)
@@ -107,15 +110,15 @@ def train_model(
             device
         )
 
-        test_loss, test_acc = test_step(
+        val_loss, val_acc = val_step(
             model,
-            test_dataloader,
+            val_dataloader,
             accuracy,
             loss_fn,
             device
         )
 
-        print(f'Epoch {epoch + 1}, Train Loss {train_loss}, Train Accuracy {train_acc}, Test Loss {test_loss}, '
-              f'Test Accuracy {test_acc}')
+        print(f'Epoch {epoch + 1}, Train Loss {train_loss}, Train Accuracy {train_acc}, Val Loss {val_loss}, '
+              f'Val Accuracy {val_acc}')
 
-    writer.close()
+        scheduler.step()

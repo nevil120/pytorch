@@ -1,10 +1,10 @@
 import torch
 from pathlib import Path
 
+# Save trained model 
 def save_model(model,
                target_dir,
                model_name):
-
 
     # Create target directory
     target_dir_path = Path(target_dir)
