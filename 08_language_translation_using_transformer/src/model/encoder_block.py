@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 from src.model.feed_forward import FeedForward
@@ -6,6 +5,9 @@ from src.model.multi_head_attention import MultiHeadAttention
 
 
 class EncoderBlock(nn.Module):
+    """
+    EncoderBlock containing self-attention and feed forward layers.
+    """
 
     def __init__(self, d_model: int, num_heads: int, d_ff: int, dropout: float):
         super().__init__()
@@ -19,7 +21,7 @@ class EncoderBlock(nn.Module):
         x = x + self.dropout(self.self_attention(x, x, x, src_mask))
         x = self.norm(x)
 
-        # Feedforward with Residual Connection
+        # FeedForward with Residual Connection
         x = x + self.dropout(self.feed_forward(x))
         x = self.norm(x)
 

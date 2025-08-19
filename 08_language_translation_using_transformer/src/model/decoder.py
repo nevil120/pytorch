@@ -15,7 +15,7 @@ class Decoder(nn.Module):
 
         self.layers = nn.ModuleList(self.layers_list)
 
-    def forward(self, x, encoder_output, src_mask, tgt_mask):
+    def forward(self, x, encoder_output, src_mask):
         for layer in self.layers:
-            x = layer(x, encoder_output, src_mask, tgt_mask)
+            x = layer(x, encoder_output, src_mask)
         return x

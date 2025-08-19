@@ -95,7 +95,6 @@ def train_model(
         val_dataloader: torch.utils.data.DataLoader,
         loss_fn: torch.nn.CrossEntropyLoss,
         optimizer: torch.optim.Optimizer,
-        scheduler: torch.optim.lr_scheduler,
         device: torch.device
 ):
     accuracy = accuracy_fn(num_classes).to(device)
@@ -120,5 +119,3 @@ def train_model(
 
         print(f'Epoch {epoch + 1}, Train Loss {train_loss}, Train Accuracy {train_acc}, Val Loss {val_loss}, '
               f'Val Accuracy {val_acc}')
-
-        scheduler.step()

@@ -213,3 +213,8 @@ ENV/
 
 # End of https://www.gitignore.io/api/macos,linux,django,python,pycharm
 05_cnn_flower_classification/data/*
+05_cnn_flower_classification/models/*
+06_classification_using_encoder_only_transformer/models/*
+07_text_generation_using_decoder_only_transformer/models/*
+08_language_translation_using_transformer/models/*
+09_image_classification_using_vision_transformer/models/*

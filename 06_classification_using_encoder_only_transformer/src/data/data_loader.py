@@ -7,8 +7,8 @@ from torch.utils.data import Dataset, DataLoader
 
 from nltk.tokenize import word_tokenize
 
-PAD = 0
-UNK = 1
+from src.utils.constants import PADDING_ID, UNKNOWN_ID
+from src.utils.constants import PADDING_VALUE, UNKNOWN_VALUE
 
 
 class AGNewsDataset(Dataset):
@@ -53,9 +53,9 @@ def load_and_preprocess_data(train_file, val_file):
 # Every sentence in the batch is confined to same sequence length
 def pad_sequence(batch):
     """ Input
-    x = torch.tensor[
-            [7, 167, 854, 45, 12, 78, 67, 4567, 2345],
-            [56, 678, 435, 9087, 123],
+    x = [
+            torch.tensor[7, 167, 854, 45, 12, 78, 67, 4567, 2345],
+            torch.tensor[56, 678, 435, 9087, 123],
             ___
         ],
     y = torch.LongTensor [2, 3, ___]
@@ -71,7 +71,7 @@ def pad_sequence(batch):
     """
     texts = [text for text, label in batch]
     labels = torch.LongTensor([label for text, label in batch])
-    padded_text = torch.nn.utils.rnn.pad_sequence(texts, batch_first=True, padding_value=PAD)
+    padded_text = torch.nn.utils.rnn.pad_sequence(texts, batch_first=True, padding_value=PADDING_VALUE)
     return padded_text, labels
 
 
@@ -125,21 +125,23 @@ def create_dataloaders(train_file, val_file, batch_size, seq_len, vocab_size):
 
     # Create an dictionary {word --> id}
     """
-        {'toward': 2, 'claw': 3, 'aerospace': 4, ___}
+        {'PAD': 0, 'UNK': 1, 'toward': 2, 'claw': 3, 'aerospace': 4, ___}
     """
     word_to_id = {vocab[i]: i + 2 for i in range(len(vocab))}
+    word_to_id[PADDING_ID] = PADDING_VALUE
+    word_to_id[UNKNOWN_ID] = UNKNOWN_VALUE
 
     # Create training/testing input tensors using above word_to_id dictionary
     """
-    torch.tensor[
-        [7, 167, 854, 45, 12, 78, 67, 4567, 2345],
-        [56, 678, 435, 9087, 123],
+    [
+        torch.tensor[7, 167, 854, 45, 12, 78, 67, 4567, 2345],
+        torch.tensor[56, 678, 435, 9087, 123],
         ___      
     ]
     """
-    x_train = [torch.tensor([word_to_id.get(word, UNK) for word in text])
+    x_train = [torch.tensor([word_to_id.get(word, word_to_id.get(UNKNOWN_ID)) for word in text])
                for text in x_train_texts]
-    x_val = [torch.tensor([word_to_id.get(word, UNK) for word in text])
+    x_val = [torch.tensor([word_to_id.get(word, word_to_id.get(UNKNOWN_ID)) for word in text])
              for text in x_val_texts]
 
     # Create datasets using input and output tensors

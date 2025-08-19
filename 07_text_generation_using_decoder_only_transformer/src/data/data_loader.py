@@ -3,7 +3,8 @@ from torch.utils.data import Dataset, DataLoader
 
 from nltk.tokenize import word_tokenize
 
-from src.utils.constants import PADDING, UNKNOWN, START_OF_SENTENCE, END_OF_SENTENCE
+from src.utils.constants import PADDING_ID, UNKNOWN_ID, START_OF_SENTENCE_ID, END_OF_SENTENCE_ID
+from src.utils.constants import PADDING_VALUE, UNKNOWN_VALUE, START_OF_SENTENCE_VALUE, END_OF_SENTENCE_VALUE
 
 
 # Create a vocabulary from the book text
@@ -12,10 +13,10 @@ def create_vocab(text):
     unique_tokens = set(tokens)
 
     vocab = {token: i+4 for i, token in enumerate(unique_tokens)}
-    vocab[PADDING] = 0
-    vocab[UNKNOWN] = 1
-    vocab[START_OF_SENTENCE] = 2
-    vocab[END_OF_SENTENCE] = 3
+    vocab[PADDING_ID] = PADDING_VALUE
+    vocab[UNKNOWN_ID] = UNKNOWN_VALUE
+    vocab[START_OF_SENTENCE_ID] = START_OF_SENTENCE_VALUE
+    vocab[END_OF_SENTENCE_ID] = END_OF_SENTENCE_VALUE
 
     return vocab
 
@@ -27,13 +28,13 @@ class TextDataset(Dataset):
 
         # Create an array of tokens for all the words in the book, size = number of tokenized words
         # [89, 7856, 5467, 4245, 89, ___ ]
-        self.data = [vocab.get(token, UNKNOWN) for token in word_tokenize(book_text)]
+        self.data = [vocab.get(token, vocab.get(UNKNOWN_ID)) for token in word_tokenize(book_text)]
 
         print('Number of tokenized words: ', len(self.data))
 
         # [89, 7856, 5467, 4245, 89, ___ ] + ([3] * 20)
         # [89, 7856, 5467, 4245, 89, ___, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
-        self.data = self.data + ([vocab[END_OF_SENTENCE]] * self.seq_len)
+        self.data = self.data + ([vocab[END_OF_SENTENCE_ID]] * self.seq_len)
         print('Number of tokenized words after adding <eos>: ', len(self.data))
 
     def __len__(self):

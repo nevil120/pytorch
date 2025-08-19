@@ -1,7 +1,4 @@
 import torch
-import torchmetrics
-
-from src.utils.utils import accuracy_fn
 
 
 def train_step(

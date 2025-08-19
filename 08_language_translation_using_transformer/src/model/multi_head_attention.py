@@ -1,16 +1,18 @@
 import math
+
+import torch
 import torch.nn as nn
+
+from src.utils.utils import get_device
 
 
 class MultiHeadAttention(nn.Module):
+    """
+    MultiHeadAttention calculates attention among words in a sentence to
+    find out how words are related to each other.
+    """
 
     def __init__(self, d_model: int, num_heads: int, dropout: float):
-        """
-        :param d_model: Size of embedding vector
-        :param num_heads: number of heads
-        :param dropout: dropout rate
-        :return: returns nothing
-        """
         super().__init__()
         self.d_model = d_model
         self.num_heads = num_heads
@@ -26,23 +28,29 @@ class MultiHeadAttention(nn.Module):
         self.output_linear_layer = nn.Linear(d_model, d_model)
         self.dropout = nn.Dropout(dropout)
 
+    # Calculate attention for the input batch of sentences
     @staticmethod
-    def attention(query, key, value, mask, dropout: nn.Dropout):
+    def attention(query, key, value, src_mask, dropout: nn.Dropout):
         d_k = query.shape[-1]
 
         # (batch, num_heads, seq_len, d_k) @ (batch, num_heads, d_k, seq_len) --> (batch, num_heads, seq_len, seq_len)
         attention_scores = (query @ key.transpose(-2, -1)) / math.sqrt(d_k)
-        if mask is not None:
-            attention_scores.masked_fill_(mask == 0, -1e9)
+        if src_mask is not None:
+            attention_scores.masked_fill(src_mask, -1e9)
+        else:
+            tgt_mask = torch.triu(torch.ones(attention_scores.size(-1), attention_scores.size(-1)),
+                                  diagonal=1).to(get_device())
+            attention_scores = attention_scores + (tgt_mask * -1e9)
+
         attention_scores = attention_scores.softmax(dim=-1)
         if dropout is not None:
             attention_scores = dropout(attention_scores)
 
         # (attention_scores @ value)
         # (batch, num_heads, seq_len, seq_len) @ (batch, num_heads, seq_len, d_k) --> (batch, h, seq_len, d_k)
-        return (attention_scores @ value), attention_scores
+        return attention_scores @ value
 
-    def forward(self, query_input, key_input, value_input, mask):
+    def forward(self, query_input, key_input, value_input, src_mask):
         # Applying linear layer to input matrices to create query, key, and values
         # (batch, seq_len, d_model) --> (batch, seq_len, d_model)
         query = self.query_linear_layer(query_input)
@@ -55,8 +63,8 @@ class MultiHeadAttention(nn.Module):
         key = key.view(key.shape[0], key.shape[1], self.num_heads, self.d_k).transpose(1, 2)
         value = value.view(value.shape[0], value.shape[1], self.num_heads, self.d_k).transpose(1, 2)
 
-        # Apply attention
-        x, attention_scores = MultiHeadAttention.attention(query, key, value, mask, self.dropout)
+        # Calculate attention for the input batch of sentences
+        x = MultiHeadAttention.attention(query, key, value, src_mask, self.dropout)
 
         # Combine attention heads
         # (batch, num_heads, seq_len, d_k) --> (batch, seq_len, num_heads, d_k) --> (batch, seq_len, d_model)

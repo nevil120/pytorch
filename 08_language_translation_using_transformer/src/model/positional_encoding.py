@@ -11,12 +11,6 @@ class PositionalEncoding(nn.Module):
     """
 
     def __init__(self, d_model: int, seq_len: int, dropout: float):
-        """
-        :param d_model: Size of embedding vector
-        :param seq_len: Size of a sentence
-        :param dropout: Dropout rate
-        :return: returns nothing
-        """
         super().__init__()
         self.d_model = d_model
         self.seq_len = seq_len
@@ -38,7 +32,7 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('positional_encoding', positional_encoding)
 
     def forward(self, x):
-        # Add input embedding to a positional embeddings - (batch_size, seq_len, d_model) + (1, seq_len, d_model)
-        # Outputs (batch_size, seq_len, d_model)
-        x = x + (self.positional_encoding[:, :x.shape[1], :]).requires_grad(False)
+        # Adds input embedding to a positional embeddings - (batch_size, seq_len, d_model) + (1, seq_len, d_model)
+        # Outputs positional encoded embeddings (batch_size, seq_len, d_model)
+        x = x + (self.positional_encoding[:, :x.shape[1], :]).requires_grad_(False)
         return self.dropout(x)
